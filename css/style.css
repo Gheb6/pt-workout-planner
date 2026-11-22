@@ -868,8 +868,38 @@ body {
 
 .sheet-day-block {
   margin-bottom: 1.25rem;
-  page-break-inside: avoid;
-  break-inside: avoid;
+  page-break-inside: auto;
+  break-inside: auto;
+}
+
+/* Regole per esportazione PDF ed interruzioni pagina */
+.html2pdf__page-break,
+.sheet-page-break {
+  page-break-before: always !important;
+  break-before: page !important;
+}
+
+.sheet-mini-page-header {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+.sheet-exercise-table tr {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+.sheet-day-title {
+  page-break-after: avoid !important;
+  break-after: avoid !important;
+}
+
+.sheet-header-top,
+.sheet-client-card,
+.sheet-notes-box,
+.sheet-footer {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
 }
 
 .sheet-day-title {
@@ -1080,14 +1110,19 @@ body {
   }
 
   .sheet-day-block {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    margin-bottom: 20px !important;
+    margin-bottom: 24px !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
   }
 
-  .sheet-exercise-table th {
-    background: #e2e8f0 !important;
-    color: #000000 !important;
+  .print-page-per-day .sheet-day-block:not(:first-child) {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .sheet-exercise-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .sheet-day-title {
@@ -1095,6 +1130,16 @@ body {
     color: #ffffff !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .sheet-header-top,
+  .sheet-client-card,
+  .sheet-notes-box,
+  .sheet-footer {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .sheet-video-btn {

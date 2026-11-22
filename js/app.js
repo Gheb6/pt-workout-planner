@@ -861,39 +861,127 @@ function saveCurrentAsTemplate() {
 }
 
 // ==========================================================================
-// ESPORTAZIONE PDF OTTIMIZZATO PER SMARTPHONE
+// ESPORTAZIONE PDF OTTIMIZZATO PER SMARTPHONE (TUTTI I GIORNI)
 // ==========================================================================
-async function exportWorkoutPDF() {
-  const element = document.getElementById('printableWorkoutArea');
-  if (!element) return;
+async function exportWorkoutPDF(mode = 'per-day') {
+  const original = document.querySelector('.sheet-render');
+  if (!original) {
+    showToast('Nessuna scheda da esportare!');
+    return;
+  }
 
   const clientName = (AppState.workout.clientName || 'Cliente').replace(/\s+/g, '_');
   const dateStr = AppState.workout.date || new Date().toISOString().split('T')[0];
-  const filename = `Scheda_${clientName}_${dateStr}.pdf`;
+  const filename = mode === 'continuous'
+    ? `Scheda_Mobile_${clientName}_${dateStr}.pdf`
+    : `Scheda_${clientName}_${dateStr}.pdf`;
 
-  showToast('Generazione PDF in corso...');
+  showToast('Generazione PDF in corso (tutti i giorni inclusi)...');
 
-  // Configurazione html2pdf per formato mobile/smartphone
-  const opt = {
-    margin: [8, 8, 8, 8],
-    filename: filename,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2.2, useCORS: true, letterRendering: true, scrollY: 0 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-  };
+  // Verifica preferenza utente "1 Giorno per Pagina"
+  const chkPagePerDay = document.getElementById('chkPagePerDay');
+  const pagePerDay = chkPagePerDay ? chkPagePerDay.checked : true;
+
+  // Wrapper di esportazione completamente svincolato da altezze fisse e scrollbar
+  const exportWrapper = document.createElement('div');
+  exportWrapper.id = 'pdfExportWrapper';
+  exportWrapper.style.position = 'fixed';
+  exportWrapper.style.left = '-9999px';
+  exportWrapper.style.top = '0';
+  exportWrapper.style.width = '780px';
+  exportWrapper.style.background = '#ffffff';
+  exportWrapper.style.color = '#0f172a';
+  exportWrapper.style.padding = '16px 20px';
+  exportWrapper.style.boxSizing = 'border-box';
+  exportWrapper.style.zIndex = '-99999';
+
+  // Clona l'intero contenuto della scheda
+  const clone = original.cloneNode(true);
+
+  if (mode !== 'continuous' && pagePerDay) {
+    // Inizia ogni giorno su una pagina pulita
+    const dayBlocks = clone.querySelectorAll('.sheet-day-block');
+    dayBlocks.forEach((block, idx) => {
+      if (idx > 0) {
+        block.classList.add('html2pdf__page-break');
+        block.style.pageBreakBefore = 'always';
+        block.style.breakBefore = 'page';
+        block.style.marginTop = '24px';
+
+        // Intestazione in cima alla pagina successiva per dare contesto chiaro all'atleta
+        const miniHeader = document.createElement('div');
+        miniHeader.className = 'sheet-mini-page-header';
+        miniHeader.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 6px; margin-bottom: 14px; font-size: 11px; font-weight: 700; color: #475569;">
+            <span>🏋️ ${escapeHtml(AppState.profile.name || 'Personal Trainer')} • Scheda per: <strong style="color: #0f172a;">${escapeHtml(AppState.workout.clientName || 'Mario Rossi')}</strong></span>
+            <span style="background: #0f172a; color: #ffffff; padding: 2px 6px; border-radius: 4px; font-size: 9px; text-transform: uppercase;">
+              ${escapeHtml(AppState.workout.goal || 'Scheda')}
+            </span>
+          </div>
+        `;
+        block.insertBefore(miniHeader, block.firstChild);
+      }
+    });
+  }
+
+  exportWrapper.appendChild(clone);
+  document.body.appendChild(exportWrapper);
+
+  let opt;
+  if (mode === 'continuous') {
+    // Modalità striscia continua: calcola l'altezza totale reale del contenuto
+    const fullHeightPx = clone.offsetHeight || 1600;
+    const heightMm = Math.ceil(fullHeightPx * 0.264583) + 24; // Conversione px -> mm con margine
+
+    opt = {
+      margin: [6, 6, 6, 6],
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+        scrollY: 0,
+        windowWidth: 800
+      },
+      jsPDF: { unit: 'mm', format: [210, Math.max(heightMm, 297)], orientation: 'portrait' }
+    };
+  } else {
+    // Modalità multi-pagina classica A4
+    opt = {
+      margin: [8, 8, 8, 8],
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+        scrollY: 0,
+        windowWidth: 800
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: {
+        mode: ['css', 'legacy'],
+        avoid: ['tr', '.sheet-client-card', '.sheet-notes-box', '.sheet-header-top', '.sheet-mini-page-header']
+      }
+    };
+  }
 
   try {
     if (typeof html2pdf !== 'undefined') {
-      await html2pdf().set(opt).from(element).save();
-      showToast('PDF scaricato con successo! Pronto per WhatsApp!');
+      await html2pdf().set(opt).from(clone).save();
+      showToast('PDF completo scaricato con successo! Tutte le pagine incluse.');
     } else {
       window.print();
     }
   } catch (err) {
     console.error('Errore generazione PDF:', err);
-    // Fallback a stampa nativa
+    showToast('Uso della stampa del browser come alternativa...');
     window.print();
+  } finally {
+    if (exportWrapper && exportWrapper.parentNode) {
+      exportWrapper.parentNode.removeChild(exportWrapper);
+    }
   }
 }
 
@@ -1104,12 +1192,25 @@ function initEventListeners() {
   // Esporta PDF
   const btnExportPDF = document.getElementById('btnExportPDF');
   const btnExportPDF2 = document.getElementById('btnExportPDF2');
-  if (btnExportPDF) btnExportPDF.addEventListener('click', exportWorkoutPDF);
-  if (btnExportPDF2) btnExportPDF2.addEventListener('click', exportWorkoutPDF);
+  const btnExportContinuous = document.getElementById('btnExportContinuous');
+
+  if (btnExportPDF) btnExportPDF.addEventListener('click', () => exportWorkoutPDF('per-day'));
+  if (btnExportPDF2) btnExportPDF2.addEventListener('click', () => exportWorkoutPDF('per-day'));
+  if (btnExportContinuous) btnExportContinuous.addEventListener('click', () => exportWorkoutPDF('continuous'));
 
   // Stampa A4
   const btnPrintA4 = document.getElementById('btnPrintA4');
-  if (btnPrintA4) btnPrintA4.addEventListener('click', () => window.print());
+  if (btnPrintA4) {
+    btnPrintA4.addEventListener('click', () => {
+      const chkPagePerDay = document.getElementById('chkPagePerDay');
+      if (chkPagePerDay && chkPagePerDay.checked) {
+        document.body.classList.add('print-page-per-day');
+      } else {
+        document.body.classList.remove('print-page-per-day');
+      }
+      window.print();
+    });
+  }
 
   // Modal Profilo Trainer
   const btnEditProfile = document.getElementById('btnEditProfile');

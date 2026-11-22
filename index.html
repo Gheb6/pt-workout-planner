@@ -137,25 +137,30 @@
     <!-- COLONNA ANTEPRIMA SMARTPHONE (DESTRA) -->
     <aside class="mobile-preview-sidebar" id="previewSidebar">
       <div class="preview-sticky">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.4rem;">
           <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
             📱 Vista Schermo Cliente (PDF)
           </span>
-          <span style="font-size: 0.7rem; color: var(--accent-primary); font-weight: 600;">
-            ● Aggiornato in tempo reale
-          </span>
+          <label style="font-size: 0.72rem; color: var(--accent-primary); font-weight: 600; display: flex; align-items: center; gap: 0.35rem; cursor: pointer;" title="Separa ciascun giorno su una pagina pulita del PDF">
+            <input type="checkbox" id="chkPagePerDay" checked> 1 Giorno per Pagina
+          </label>
         </div>
 
         <!-- Cornice Telefono -->
         <div class="phone-mockup-wrapper">
-          <div class="phone-screen" id="printableWorkoutArea">
-            <!-- Il contenuto viene renderizzato qui in tempo reale da app.js -->
+          <div class="phone-screen">
+            <div id="printableWorkoutArea">
+              <!-- Il contenuto viene renderizzato qui in tempo reale da app.js -->
+            </div>
           </div>
         </div>
 
-        <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; justify-content: center;">
-          <button class="btn btn-primary btn-sm" id="btnExportPDF2" style="width: 100%;">
-            📥 Scarica Questo PDF per Smartphone
+        <div style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.45rem;">
+          <button class="btn btn-primary" id="btnExportPDF2" style="width: 100%;">
+            📥 Scarica PDF Completo (Tutti i Giorni)
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btnExportContinuous" style="width: 100%; font-size: 0.75rem;" title="Genera un unico foglio verticale continuo da scorrere su telefono senza interruzioni">
+            📱 Scarica a Pagina Continua (Striscia unica)
           </button>
         </div>
       </div>
