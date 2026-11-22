@@ -882,18 +882,22 @@ async function exportWorkoutPDF(mode = 'per-day') {
   const chkPagePerDay = document.getElementById('chkPagePerDay');
   const pagePerDay = chkPagePerDay ? chkPagePerDay.checked : true;
 
-  // Wrapper di esportazione completamente svincolato da altezze fisse e scrollbar
+  // Wrapper di esportazione: position absolute a (0,0) con opacity 0
+  // IMPORTANTE: NON usare position:fixed con left negativo — html2canvas cattura
+  // con offset scrollX sbagliato e taglia il lato sinistro del contenuto.
   const exportWrapper = document.createElement('div');
   exportWrapper.id = 'pdfExportWrapper';
-  exportWrapper.style.position = 'fixed';
-  exportWrapper.style.left = '-9999px';
+  exportWrapper.style.position = 'absolute';
   exportWrapper.style.top = '0';
-  exportWrapper.style.width = '780px';
+  exportWrapper.style.left = '0';
+  exportWrapper.style.width = '794px';
   exportWrapper.style.background = '#ffffff';
   exportWrapper.style.color = '#0f172a';
   exportWrapper.style.padding = '16px 20px';
   exportWrapper.style.boxSizing = 'border-box';
-  exportWrapper.style.zIndex = '-99999';
+  exportWrapper.style.opacity = '0';
+  exportWrapper.style.pointerEvents = 'none';
+  exportWrapper.style.zIndex = '-1';
 
   // Clona l'intero contenuto della scheda
   const clone = original.cloneNode(true);
@@ -941,8 +945,9 @@ async function exportWorkoutPDF(mode = 'per-day') {
         scale: 2,
         useCORS: true,
         letterRendering: true,
+        scrollX: 0,
         scrollY: 0,
-        windowWidth: 800
+        windowWidth: 794
       },
       jsPDF: { unit: 'mm', format: [210, Math.max(heightMm, 297)], orientation: 'portrait' }
     };
@@ -956,13 +961,15 @@ async function exportWorkoutPDF(mode = 'per-day') {
         scale: 2,
         useCORS: true,
         letterRendering: true,
+        scrollX: 0,
         scrollY: 0,
-        windowWidth: 800
+        windowWidth: 794
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak: {
         mode: ['css', 'legacy'],
-        avoid: ['tr', '.sheet-client-card', '.sheet-notes-box', '.sheet-header-top', '.sheet-mini-page-header']
+        avoid: ['.sheet-exercise-card', '.sheet-client-card', '.sheet-notes-box', '.sheet-header-top', '.sheet-mini-page-header']
+        avoid: ['.sheet-exercise-table tr', '.sheet-day-title', '.sheet-client-card', '.sheet-notes-box', '.sheet-header-top', '.sheet-mini-page-header']
       }
     };
   }
