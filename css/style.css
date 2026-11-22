@@ -228,6 +228,18 @@ body {
     grid-template-columns: 1fr 440px;
   }
 }
+@media (max-width: 1099px) {
+  .app-main.with-preview {
+    grid-template-columns: 1fr !important;
+  }
+  .mobile-preview-sidebar {
+    display: none !important;
+  }
+  .app-main.with-preview .mobile-preview-sidebar {
+    display: flex !important;
+  }
+}
+
 
 /* Card Contenitore */
 .card {
@@ -777,6 +789,21 @@ body {
   position: relative;
   scrollbar-width: thin;
 }
+@media (max-width: 480px) {
+  .phone-mockup-wrapper {
+    border: none;
+    border-radius: 16px;
+    padding: 2px;
+    box-shadow: none;
+  }
+  .phone-screen {
+    height: auto;
+    max-height: 75vh;
+    border-radius: 12px;
+    padding: 0.75rem 0.5rem;
+  }
+}
+
 
 /* Elementi scheda all'interno dell'anteprima / PDF mobile */
 .sheet-render {
